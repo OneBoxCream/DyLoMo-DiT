@@ -1,0 +1,19 @@
+{
+  "model_type": "dylomo-dit-t2i",
+  "hidden_size": 1024,
+  "num_layers": 32,
+  "attention_head_dim": 128,
+  "loop_span": [8, 24],
+  "pass_schedule": {"thresholds": [], "passes": [2]},
+  "routing_heads": 4,
+  "experts_per_head": 128,
+  "top_k": 6,
+  "expert_hidden_size": 1280,
+  "shared_expert_hidden_size": 1280,
+  "dense_ffn_hidden_size": 2688,
+  "route_scale": 4.9,
+  "residual_streams": 4,
+  "latent_channels": 48,
+  "text_channels": 3584,
+  "time_channels": 64
+}

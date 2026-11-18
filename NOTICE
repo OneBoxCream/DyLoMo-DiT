@@ -1,0 +1,31 @@
+DyLoMo-DiT
+Copyright (c) COPYRIGHT_HOLDER_PLACEHOLDER
+
+This repository contains code written for DyLoMo-DiT. Parts of it follow or adapt the following works:
+
+1. MAGI-2 preview, Copyright (c) 2025-2026 SandAI, Apache License 2.0
+   https://github.com/SandAI-org/MAGI-2-preview/tree/073c84f2102ec3c9287623113a103c14402770ad
+   The clamped SwiGLU activation, the element-wise Fourier rotary embedding with its coordinate layout, the routing
+   rule and layout of the multi-head sparse experts, the attention sink and per-head attention gate, and the gate
+   form of the multi-stream residual are adapted from this release and have been modified
+   (dylomo/layers.py, dylomo/attention.py, dylomo/moe.py, dylomo/residual.py).
+
+2. improved-diffusion / guided-diffusion / GLIDE (OpenAI), MIT License, Copyright (c) 2021 OpenAI
+   https://github.com/openai/improved-diffusion  https://github.com/openai/guided-diffusion
+   The timestep respacing rule, the learned-range variance parameterisation of the DDPM sampler
+   (dylomo/diffusion.py) and the sinusoidal timestep embedding (dylomo/models/class_cond.py) follow these
+   repositories. The full text of their license is in LICENSES/MIT-OpenAI.txt.
+
+3. DiT (Meta Platforms, Inc.), https://github.com/facebookresearch/DiT
+   The class-conditional models follow the training and evaluation protocol of DiT (conditioning layout,
+   classifier-free guidance on the first three latent channels, pixel conversion for the FID sample batch). No
+   source file of DiT is included in this repository.
+
+4. HunyuanVideo-1.5 (Tencent), https://github.com/Tencent-Hunyuan/HunyuanVideo-1.5
+   License: https://github.com/Tencent-Hunyuan/HunyuanVideo-1.5/blob/main/LICENSE
+   The system instruction of the text encoder (dylomo/text_encoder.py) is its prompt template
+   "li-dit-encode-image-json".
+
+Models used at inference time are not distributed with this repository and keep their own licenses:
+sd-vae-ft-ema (Stability AI, MIT), Qwen2.5-VL-7B-Instruct (Alibaba Cloud, Apache-2.0), Wan2.2 VAE (Wan team,
+Apache-2.0). The licenses of the Python packages this repository depends on are listed in THIRD_PARTY_LICENSES.md.

@@ -1,0 +1,7 @@
+# Versions the code was tested with (Python 3.12). requirements.lock.txt lists the complete tested environment.
+torch>=2.5.1,<2.12       # tested with 2.5.1, 2.6.0 and 2.11.0
+numpy==2.1.0
+safetensors==0.8.0
+pillow==12.1.1
+diffusers==0.38.0        # sd-vae-ft-ema (class-conditional) and the Wan2.2 VAE (text-to-image)
+transformers==4.57.1     # Qwen2.5-VL text encoder (text-to-image only)

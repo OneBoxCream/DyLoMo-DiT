@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+checkpoints/
+runs/
+outputs/
+*.safetensors
+!tests/fixtures/*.safetensors
+*.npz
+*.pt
+*.png
+.hypothesis/

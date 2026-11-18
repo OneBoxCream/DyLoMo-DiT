@@ -1,0 +1,18 @@
+{
+  "model_type": "dylomo-dit-class-cond",
+  "hidden_size": 1024,
+  "num_layers": 16,
+  "attention_head_dim": 128,
+  "loop_span": [4, 11],
+  "pass_schedule": {"thresholds": [500], "passes": [3, 1]},
+  "routing_heads": 4,
+  "experts_per_head": 16,
+  "top_k": 6,
+  "expert_hidden_size": 640,
+  "shared_expert_hidden_size": 640,
+  "dense_ffn_hidden_size": 2688,
+  "route_scale": 4.9,
+  "in_channels": 4,
+  "patch_size": 2,
+  "num_classes": 1000
+}
