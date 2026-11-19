@@ -10,4 +10,5 @@ outputs/
 *.npz
 *.pt
 *.png
+!assets/*.png
 .hypothesis/
