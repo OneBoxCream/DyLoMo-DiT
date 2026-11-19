@@ -6,8 +6,8 @@
 
 <a href="PAPER_URL_PLACEHOLDER"><img src="https://img.shields.io/badge/arXiv-Paper-b31b1b.svg?logo=arxiv" height="22"></a>
 <a href="PROJECT_PAGE_URL_PLACEHOLDER"><img src="https://img.shields.io/badge/Project-Page-1f4e8c.svg" height="22"></a>
-<a href="https://huggingface.co/OneCreamBox/dylomo-dit-imagenet256"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Weights-ImageNet%20256-d96902.svg" height="22"></a>
-<a href="https://huggingface.co/OneCreamBox/dylomo-dit-t2i-preview"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Weights-Text--to--Image%20preview-d96902.svg" height="22"></a>
+<a href="https://huggingface.co/OneCreamBox/DyLoMo-DiT-ImageNet256"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Weights-ImageNet%20256-d96902.svg" height="22"></a>
+<a href="https://huggingface.co/OneCreamBox/DyLoMo-DiT-T2I-Preview"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Weights-Text--to--Image%20preview-d96902.svg" height="22"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/Code-Apache--2.0-2e7d32.svg" height="22"></a>
 <a href="https://creativecommons.org/licenses/by-nc/4.0/"><img src="https://img.shields.io/badge/Weights-CC%20BY--NC%204.0-6d6d6d.svg" height="22"></a>
 
@@ -201,7 +201,7 @@ forward pass of the denoiser.
 
 ## 🧱 Model Zoo
 
-### Class-conditional, ImageNet 256×256 &nbsp; [🤗 weights](https://huggingface.co/OneCreamBox/dylomo-dit-imagenet256)
+### Class-conditional, ImageNet 256×256 &nbsp; [🤗 weights](https://huggingface.co/OneCreamBox/DyLoMo-DiT-ImageNet256)
 
 All models: 400k training steps unless noted, EMA weights, 250-step DDPM, classifier-free guidance 1.5, FID-50K with
 the ADM evaluator.
@@ -229,7 +229,7 @@ The 1.6M-step model continues the seed-42 XL run. The released checkpoints' full
 | DyLoMo-DiT-XL (400k) | 42 | 4.34 | 4.30 | 172.4 | 0.82 | 0.53 |
 | DyLoMo-DiT-XL (1.6M) | 42 | 2.18 | 4.28 | 253.0 | 0.83 | 0.58 |
 
-### Text-to-image &nbsp; [🤗 weights](https://huggingface.co/OneCreamBox/dylomo-dit-t2i-preview)
+### Text-to-image &nbsp; [🤗 weights](https://huggingface.co/OneCreamBox/DyLoMo-DiT-T2I-Preview)
 
 > **The text-to-image weights are an intermediate checkpoint, not a final model.** They are released to make the
 > text-to-image result of the paper reproducible.
@@ -244,7 +244,7 @@ flow; sampling: 50 Euler steps, shift 1.6, APG with guidance scale 5.
 ## 🔧 Installation
 
 ```bash
-git clone https://github.com/OneBoxCream/dylomo-dit.git dylomo-dit && cd dylomo-dit
+git clone https://github.com/OneBoxCream/DyLoMo-DiT.git && cd DyLoMo-DiT
 pip install -r requirements.txt
 ```
 
@@ -268,10 +268,10 @@ Download the weights from the Hugging Face Hub:
 
 ```bash
 # one ImageNet model folder (config.json + model.safetensors); also DyLoMo-DiT-B, DyLoMo-DiT-L, DyLoMo-DiT-XL-1.6M
-huggingface-cli download OneCreamBox/dylomo-dit-imagenet256 --include "DyLoMo-DiT-XL/*" --local-dir checkpoints
+huggingface-cli download OneCreamBox/DyLoMo-DiT-ImageNet256 --include "DyLoMo-DiT-XL/*" --local-dir checkpoints
 
 # the text-to-image research preview (config.json, model.safetensors.index.json and all shards, about 32 GB)
-huggingface-cli download OneCreamBox/dylomo-dit-t2i-preview --local-dir checkpoints/dylomo-dit-t2i
+huggingface-cli download OneCreamBox/DyLoMo-DiT-T2I-Preview --local-dir checkpoints/dylomo-dit-t2i
 ```
 
 `dylomo.load_model()` reads both formats and preserves the stored expert dtype by default.
