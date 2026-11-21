@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this code or these weights, please cite the DyLoMo-DiT paper (see the Citation section of the README)."
+title: "DyLoMo-DiT: Dynamic Looped Mixture-of-Experts Diffusion Transformers"
+type: software
+authors:
+  - family-names: Li
+    given-names: Lernie
+  - family-names: Liu
+    given-names: Yuanliu
+  - family-names: Xiong
+    given-names: Pengfei
+  - family-names: Zhang
+    given-names: Wei
+repository-code: "https://github.com/OneBoxCream/DyLoMo-DiT"
+url: "https://oneboxcream.github.io/DyLoMo-DiT/"
+license: Apache-2.0
