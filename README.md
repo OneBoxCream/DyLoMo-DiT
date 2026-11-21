@@ -25,7 +25,7 @@ its active parameters.
 
 ## 🔥 News
 
-* **RELEASE_DATE_PLACEHOLDER** — Paper, inference code, ImageNet 256×256 weights and a text-to-image research preview
+* **RELEASE_DATE_PLACEHOLDER** — Paper, code, ImageNet 256×256 weights and a text-to-image research preview
   are released.
 
 ## 📑 Release Status
@@ -34,8 +34,7 @@ its active parameters.
 - [x] ImageNet 256×256 weights: DyLoMo-DiT-B / L / XL (400k steps) and DyLoMo-DiT-XL (1.6M steps)
 - [x] Text-to-image weights: an intermediate checkpoint, released as a research preview
 - [x] FID reproduction scripts and the compute accounting of the paper
-
-Training code is not part of this release.
+- [ ] Training code for the ImageNet 256×256 experiments
 
 ## 📋 Contents
 
