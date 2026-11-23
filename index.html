@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DyLoMo-DiT: Dynamic Looped Mixture-of-Experts Diffusion Transformers</title>
+<meta name="description" content="DyLoMo-DiT reuses parameters rather than adding them: a weight-shared loop applies the middle layers repeatedly, sparse experts allocate capacity across tokens, and the number of passes follows the noise level.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:type" content="website">
+<meta property="og:title" content="DyLoMo-DiT: Dynamic Looped Mixture-of-Experts Diffusion Transformers">
+<meta property="og:description" content="A diffusion Transformer with a weight-shared loop, sparse experts, and passes allocated by noise level.">
+<meta property="og:image" content="https://oneboxcream.github.io/DyLoMo-DiT/static/img/hero_t2i_1200.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231f4e8c'/%3E%3Cpath d='M8 11h16M8 16h16M8 21h16' stroke='%23fff' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="static/css/style.css?v=dece6e93">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem("theme");
+    if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="wrap top__bar">
+    <nav class="top__nav" aria-label="Sections">
+      <a class="wide-only" href="#abstract">Abstract</a>
+      <a href="#method">Method</a>
+      <a href="#results">Results</a>
+      <a href="#analysis">Analysis</a>
+      <a href="#samples">Samples</a>
+      <a href="#cite">Cite</a>
+    </nav>
+    <button class="theme" type="button" aria-label="Switch between light and dark theme" title="Switch between light and dark theme">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3.5a8.5 8.5 0 0 0 0 17z" fill="currentColor"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="mast wrap">
+  <h1 class="mast__title" aria-label="DyLoMo-DiT: Dynamic Looped Mixture-of-Experts Diffusion Transformers">
+    <span class="mast__mark">DyLoMo-DiT</span>
+    <span class="mast__sub"><span class="mast__line"><span class="mast__phrase"><b>Dy</b>namic <b>Lo</b>oped</span> <span class="mast__phrase"><b>M</b>ixture-<b>o</b>f-Experts</span></span> <span class="mast__line mast__phrase"><b>Di</b>ffusion <b>T</b>ransformers</span></span>
+  </h1>
+  <p class="mast__people"><span>Lernie Li</span><span>Yuanliu Liu</span><span>Pengfei Xiong</span><span>Wei Zhang</span></p>
+  <ul class="links">
+    <li><a class="btn btn--main" href="https://arxiv.org/search/?query=DyLoMo-DiT&amp;searchtype=all"><svg class="btn__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 2H6.5A1.5 1.5 0 0 0 5 3.5v17A1.5 1.5 0 0 0 6.5 22h11a1.5 1.5 0 0 0 1.5-1.5V7z"/><path d="M14 2v5h5M9 12.5h6M9 16.5h6"/></svg><span class="btn__text">Paper<small>arXiv</small></span></a></li>
+    <li><a class="btn" href="https://github.com/OneBoxCream/DyLoMo-DiT"><svg class="btn__icon btn__icon--fill" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span class="btn__text">Code<small>GitHub</small></span></a></li>
+    <li><a class="btn" href="https://huggingface.co/OneCreamBox/DyLoMo-DiT-ImageNet256"><img class="btn__icon btn__icon--img" src="static/icons/hugging-face-emoji.svg" alt="" width="24" height="24"><span class="btn__text">Weights<small>ImageNet 256×256</small></span></a></li>
+    <li><a class="btn" href="https://huggingface.co/OneCreamBox/DyLoMo-DiT-T2I-Preview"><img class="btn__icon btn__icon--img" src="static/icons/hugging-face-emoji.svg" alt="" width="24" height="24"><span class="btn__text">Weights<small><span class="label-long">Text-to-image preview</span><span class="label-short">T2I preview</span></small></span></a></li>
+  </ul>
+  <p class="notice"><b>Intermediate checkpoint.</b> The text-to-image weights are an intermediate checkpoint, released as a research preview. They are not a final model.</p>
+</section>
+
+<figure class="hero wrap">
+  <a href="static/img/hero_t2i_2400.jpg">
+    <img src="static/img/hero_t2i_1200.jpg"
+         srcset="static/img/hero_t2i_1200.jpg 1200w, static/img/hero_t2i_2400.jpg 2400w"
+         sizes="(min-width: 74rem) 69rem, 100vw"
+         width="2400" height="1066"
+         alt="Ten generated images in two rows: a stone alley with a blue door, a misty bamboo forest path, a smiling older man with a white beard, a mechanical butterfly on a purple flower, a white stag with glowing antlers in a snowy forest, an anime-style woman with a cat at sunset, a woman in a trench coat on a zebra crossing, a wooden sign reading TO THE BEACH, a sushi platter, and an ink wash painting of misty mountains.">
+  </a>
+  <figcaption>Selected text-to-image samples from DyLoMo-DiT (15.48B total parameters, 1.05B active per image token), generated with the intermediate checkpoint that is released as a research preview.</figcaption>
+  <details>
+    <summary>Prompts of the ten samples</summary>
+    <ol class="prompts">
+      <li><span class="where">Row 1, image 1<br>1024×1808</span><span>A narrow stone alley in an old Mediterranean town early in the morning, with whitewashed walls, a blue painted wooden door on the left, and pink bougainvillea spilling over a wall on the right. Stone steps lead up and curve out of sight. A cat sits on one of the steps. The sun has just risen and lights the top of the walls while the lower alley is in cool shadow. No people are present.</span></li>
+      <li><span class="where">Row 1, image 2<br>1024×1808</span><span>A path winds through a dense bamboo forest in morning mist, with tall green stalks rising on both sides and leaning slightly over the path. Fallen leaves cover the stone steps in the foreground. The mist softens the deeper rows of bamboo into pale gray-green silhouettes, while the nearest stalks show their smooth segmented surfaces. Soft diffused light filters down from above, with no direct sun, and the path curves out of sight in the distance.</span></li>
+      <li><span class="where">Row 1, image 3<br>1808×1024</span><span>An older man with white hair and a white beard is smiling broadly at the camera. He is wearing a light blue button-up shirt with two chest pockets. The background is softly blurred, showing an indoor setting with a wooden staircase to the right and a window or door on the left.</span></li>
+      <li><span class="where">Row 1, image 4<br>1024×1024</span><span>A close-up of a mechanical butterfly made of brass gears, thin copper wire, and translucent stained-glass wings in amber and blue, resting on a real purple flower. Tiny screws and springs are visible in its body, and the wings catch the sunlight like real glass. The background is a soft blur of green garden. The lighting is bright daylight from the upper left, with sharp detail on the gears and a shallow depth of field.</span></li>
+      <li><span class="where">Row 1, image 5<br>1024×1808</span><span>A white stag with antlers that glow faintly with soft blue light stands in a snowy forest at night, surrounded by gently falling snow. Small points of light drift around its antlers. The trees are dark pines heavy with snow, and the ground is untouched white. Moonlight from above and the glow of the antlers light the snow around the stag. The rendering is photorealistic, with fine fur detail and visible breath in the cold air.</span></li>
+      <li><span class="where">Row 2, image 1<br>1024×1808</span><span>An anime-style illustration of a young woman with short blue-black hair, wearing a white blouse and a long navy skirt, sitting on a stone wall beside a sleeping white cat, looking out over a town at sunset. The sky is painted in gradients of orange, pink, and violet with a few soft clouds, and the rooftops below are drawn in clean lines with warm highlights. Her hair and skirt move slightly in the breeze. The line art is crisp and the shading is cel-style with soft gradients on the sky. This is a cartoon or anime illustration.</span></li>
+      <li><span class="where">Row 2, image 2<br>1024×1808</span><span>A tall woman in her thirties with dark skin and close-cropped hair walks across a zebra crossing in a city street, wearing a long beige trench coat belted at the waist over a black turtleneck and straight-leg cream trousers, with pointed black leather boots. She carries a structured brown leather handbag in her right hand and looks slightly off to the side. The buildings behind her are pale stone, softly out of focus. The light is bright and overcast, giving even tones with soft shadows. The photo is a full-length shot taken at knee height.</span></li>
+      <li><span class="where">Row 2, image 3<br>1808×1024</span><span>A weathered wooden sign on a post stands at the edge of a sandy path leading to a beach, with the words “TO THE BEACH” painted in faded white capital letters and a small arrow pointing right. Tall dune grass sways around the post, and the sea is visible in the distance under a clear blue sky. Bright midday sun casts a short shadow from the post onto the sand. The letters are clear and readable.</span></li>
+      <li><span class="where">Row 2, image 4<br>1024×1024</span><span>An assorted sushi platter arranged on a rectangular black slate board, photographed at a slight angle from above. The platter holds pieces of salmon nigiri, tuna nigiri, a shrimp nigiri, and a row of six cucumber maki rolls, with a small mound of pickled ginger and a dab of wasabi at one corner. Each slice of fish shows its glossy surface and marbling. A small dish of soy sauce and a pair of black chopsticks sit beside the board on a light wooden table. The lighting is soft and even.</span></li>
+      <li><span class="where">Row 2, image 5<br>1024×1808</span><span>An ink wash painting of misty mountains rising above a river, in a traditional East Asian style, with layered gray washes suggesting distant peaks and sharp black brushstrokes defining the pine trees on the nearest cliff. A small fishing boat with a single figure drifts on the pale water. Large areas of the paper are left empty to represent mist and sky. A single red seal mark sits in the lower corner. The brushwork varies from dry, scratchy strokes on the rocks to soft, wet gradients in the clouds. This is a painting.</span></li>
+    </ol>
+  </details>
+</figure>
+
+<section id="abstract" class="sec wrap">
+  <h2 class="sec__title">Abstract</h2>
+  <div class="sec__body prose">
+    <p>Diffusion Transformers (DiTs) scale model capacity by increasing both parameter count and computation. Mixture-of-Experts (MoE) variants expand parameter capacity while keeping per-token computation roughly fixed, but still require substantial parameter storage. In this paper, we propose Dynamic Looped MoE DiT (DyLoMo-DiT), which reuses parameters rather than adding them: a weight-shared loop repeatedly applies the middle layers, while sparse experts allocate parameter capacity across tokens. This design deepens the network without adding parameters, freeing the parameter budget for other uses, such as more experts or more distinct layers. It also allocates compute dynamically, varying the number of passes across noise levels. Experiments show that DyLoMo-DiT makes more effective use of parameter and compute budgets, with further gains from assigning more passes to low-noise steps. On ImageNet 256×256, DyLoMo-DiT reduces FID by 11–24% relative to DiT and 36–56% relative to DiT-MoE at matched parameter and compute budgets. For text-to-image generation, a scaled DyLoMo-DiT achieves a higher GenEval score than FLUX.1 (0.714 vs. 0.673), with less than one tenth of its active parameters (1.05B vs. 12B).</p>
+  </div>
+</section>
+
+<section id="method" class="sec wrap">
+  <h2 class="sec__title">Method</h2>
+  <div class="sec__body">
+    <div class="prose">
+      <p>DiT ties parameter count, forward compute and depth to its width and layer count, and uses the same configuration for every token and every noise level. DyLoMo-DiT makes these choices separately configurable.</p>
+    </div>
+    <figure class="block">
+      <div class="frame fig-scroll" style="--min:46rem">
+        <img src="static/img/architecture.png" width="2250" height="1026" loading="lazy" decoding="async"
+             alt="Architecture diagram in three panels. Panel a compares the layer stacks of DiT, an MoE-DiT and DyLoMo-DiT; DyLoMo-DiT has fewer layers, and a dashed box marks the m middle layers that share weights over r passes. Panel b shows a block of the looped segment: adaLN, attention and a multi-head MoE feed-forward network, each residual update gated and scaled by 1 over r. Panel c shows the multi-head sparse experts: a linear split into H heads, a top-k router and a grid of experts per head, a linear merge, and a shared expert that is always on.">
+      </div>
+      <p class="swipe">Swipe sideways to see the whole figure.</p>
+      <figcaption>Architecture of DyLoMo-DiT. (a) DiT, an MoE-DiT, and DyLoMo-DiT (column width sketches the stored parameters): the MoE-DiT keeps the <i>N</i> layers of DiT and adds experts to each; DyLoMo-DiT has fewer physical layers (<i>L</i> &lt; <i>N</i>), with <i>m</i> middle layers sharing weights over <i>r</i> passes. (b) A looped layer: adaLN-Zero modulates the input and gates the output, scaled by 1/<i>r</i>. (c) Multi-head sparse experts: <i>H</i> heads, each router selecting <i>k</i> of its <i>E</i> experts, plus a shared expert.</figcaption>
+    </figure>
+    <ul class="triad">
+      <li>
+        <h3>Parameters per token<span>Multi-head sparse experts</span></h3>
+        <p>Except in the first and last layers, every feed-forward network splits its input into <i>H</i> heads. Each head's router selects <i>k</i> of its <i>E</i> experts for every token, and an always-on shared expert is added. At the XL tier, <i>H</i> = 4, <i>E</i> = 16 and <i>k</i> = 6.</p>
+      </li>
+      <li>
+        <h3>Depth without parameters<span>A weight-shared loop</span></h3>
+        <p>A middle segment of <i>m</i> layers is executed <i>r</i> times with one set of weights. Each sublayer writes to the residual stream with a factor of 1/<i>r</i>, and routing is recomputed in every pass, so a token may select different experts in different passes.</p>
+      </li>
+      <li>
+        <h3>Depth by noise level<span>Allocated passes</span></h3>
+        <p>The number of passes depends on the timestep: three for <i>t</i> &lt; 500 and one for <i>t</i> ≥ 500, two on average over uniformly spaced sampling steps. The schedule is part of the model and is used in both training and sampling.</p>
+      </li>
+    </ul>
+    <div class="prose block">
+      <p>The three resources share one budget, so a model is configured as a whole, and the parameters that the loop saves go to the experts. At the budget of DiT-XL/2 (28 layers, 0.68B parameters, 118.6 GMAC), DyLoMo-DiT-XL has 16 physical layers and 23 layer visits on average. Training uses the DiT objective, without auxiliary losses, loop-specific objectives or pass embeddings.</p>
+    </div>
+  </div>
+</section>
+
+<section id="results" class="sec wrap">
+  <h2 class="sec__title">Results</h2>
+  <div class="sec__body">
+    <h3 class="sub">ImageNet 256×256 at matched budgets</h3>
+    <div class="prose">
+      <p>Every comparison is made at the same total parameter count and forward compute, with all models trained under one protocol: 400k steps, EMA weights, 250-step DDPM sampling, guidance scale 1.5, and FID over 50k images.</p>
+    </div>
+
+    <div class="ledger block">
+      <div class="ledger__row">
+        <div class="ledger__head"><span class="ledger__k">FID vs. DiT</span><span class="ledger__s">relative change at 400k steps</span></div>
+        <div class="tile"><span class="tile__label">B tier</span><span class="tile__value">−11%</span><span class="tile__detail">21.19 → 18.82</span></div>
+        <div class="tile"><span class="tile__label">L tier</span><span class="tile__value">−14%</span><span class="tile__detail">7.42 → 6.41</span></div>
+        <div class="tile"><span class="tile__label">XL tier</span><span class="tile__value">−24%</span><span class="tile__detail">5.57 → 4.22</span></div>
+      </div>
+      <div class="ledger__row">
+        <div class="ledger__head"><span class="ledger__k">FID vs. DiT-MoE</span><span class="ledger__s">relative change at 400k steps</span></div>
+        <div class="tile"><span class="tile__label">S tier</span><span class="tile__value">−36%</span><span class="tile__detail">30.83 → 19.79</span></div>
+        <div class="tile"><span class="tile__label">B tier</span><span class="tile__value">−56%</span><span class="tile__detail">16.06 → 7.01</span></div>
+        <div class="tile"><span class="tile__label">L tier</span><span class="tile__value">−56%</span><span class="tile__detail">7.92 → 3.50</span></div>
+      </div>
+    </div>
+    <p class="cap">Each tile gives the FID of the baseline, then the FID of the DyLoMo-DiT configured for the same parameters and compute. Reported values are means over training seeds; the result of each individual released checkpoint is given in the <a href="https://huggingface.co/OneCreamBox/DyLoMo-DiT-ImageNet256">model card</a>.</p>
+
+    <figure class="block">
+      <div class="frame fig-scroll" style="--min:44rem">
+        <img src="static/img/fid_curves.png" width="2400" height="1009" loading="lazy" decoding="async"
+             alt="Six line charts of FID against training steps from 100k to 400k, on a log scale. Top row: DyLoMo-DiT against DiT-B/2, DiT-L/2 and DiT-XL/2, ending 11, 14 and 24 percent lower. Bottom row: DyLoMo-DiT against DiT-MoE-S, DiT-MoE-B and DiT-MoE-L, ending 36, 56 and 56 percent lower.">
+      </div>
+      <p class="swipe">Swipe sideways to see the whole figure.</p>
+      <figcaption>FID versus training steps on ImageNet-256: DiT (top; B, L, XL tiers) and DiT-MoE (bottom; S, B, L tiers) against the DyLoMo-DiT with the same parameters and forward compute. Percentages give the relative FID reduction at 400k steps.</figcaption>
+    </figure>
+
+    <div class="tbl-scroll block">
+      <table class="tbl tbl--tight">
+        <thead>
+          <tr><th scope="col">Model</th><th scope="col">Total params (M)</th><th scope="col">Active params (M)</th><th scope="col">GMAC</th><th scope="col">FID ↓</th><th scope="col">vs. DiT</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">DiT-B/2</th><td>130.5</td><td>130.5</td><td>23.0</td><td>21.19</td><td>—</td></tr>
+          <tr class="is-ours"><th scope="row">DyLoMo-DiT-B</th><td>128.5</td><td>75.8</td><td>23.1</td><td>18.82</td><td>−11%</td></tr>
+          <tr><th scope="row">DiT-L/2</th><td>458.1</td><td>458.1</td><td>80.7</td><td>7.42</td><td>—</td></tr>
+          <tr class="is-ours"><th scope="row">DyLoMo-DiT-L</th><td>451.3</td><td>278.3</td><td>80.1</td><td>6.41</td><td>−14%</td></tr>
+          <tr><th scope="row">DiT-XL/2</th><td>675.1</td><td>675.1</td><td>118.6</td><td>5.57</td><td>—</td></tr>
+          <tr class="is-ours"><th scope="row">DyLoMo-DiT-XL</th><td>686.6</td><td>411.3</td><td>117.8</td><td>4.22</td><td>−24%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="swipe">Swipe sideways to see all columns.</p>
+    <p class="cap">The three DyLoMo-DiT models whose weights are released, each next to the DiT of its tier. All values are means over training seeds; the result of each individual released checkpoint is given in the <a href="https://huggingface.co/OneCreamBox/DyLoMo-DiT-ImageNet256">model card</a>. GMAC: 10⁹ multiply-accumulates per image in one forward pass, averaged over the sampling steps. Active parameters: those that one token uses.</p>
+    <h3 class="sub">Released ImageNet checkpoints</h3>
+    <p class="prose">All released ImageNet weights use training seed 42. These single-checkpoint results use EMA weights, 250-step DDPM, guidance scale 1.5 and 50,000 images. The paper's Table 2 reports means over two seeds: B 18.82, L 6.41 and XL 4.22.</p>
+    <div class="tbl-scroll block">
+      <table id="released-checkpoints" class="tbl tbl--tight">
+        <thead><tr><th>Released checkpoint</th><th>Training seed</th><th>FID ↓</th><th>sFID ↓</th><th>IS ↑</th><th>Precision ↑</th><th>Recall ↑</th></tr></thead>
+        <tbody>
+<tr><td>DyLoMo-DiT-B (400k)</td><td>42</td><td>19.16</td><td>5.56</td><td>70.2</td><td>0.68</td><td>0.55</td></tr>
+<tr><td>DyLoMo-DiT-L (400k)</td><td>42</td><td>6.25</td><td>4.46</td><td>142.0</td><td>0.80</td><td>0.53</td></tr>
+<tr><td>DyLoMo-DiT-XL (400k)</td><td>42</td><td>4.34</td><td>4.30</td><td>172.4</td><td>0.82</td><td>0.53</td></tr>
+<tr><td>DyLoMo-DiT-XL (1.6M)</td><td>42</td><td>2.18</td><td>4.28</td><td>253.0</td><td>0.83</td><td>0.58</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+
+    <div class="prose block">
+      <p>The DiT-MoE comparison is made at each DiT-MoE tier's own budget, with DiT-MoE implemented from its public code and trained under the same protocol (16 experts per layer, 4 selected). These numbers reflect that implementation under this protocol, not the results reported in the DiT-MoE paper.</p>
+      <p>Scaling the baselines up does not close the gap. DiT-XL/2 scaled to 3.0× the parameters and compute reaches an FID of 4.75, 13% worse than DyLoMo-DiT-XL at its original scale (4.22), and the original XL DiT-MoE, with 6.2× the parameters and 2.8× the compute, reaches 6.87.</p>
+    </div>
+
+    <h3 class="sub">Longer training</h3>
+    <div class="prose">
+      <p>The advantage persists with longer training. At 1M steps DyLoMo-DiT-XL reaches an FID of 2.46 versus 3.08 for DiT-XL/2; at 1.6M steps it reaches 2.18, below the 2.27 reported for DiT-XL/2 after 7M steps.</p>
+    </div>
+    <figure class="block fig--mid">
+      <div class="frame">
+        <img src="static/img/long_training.png" width="1800" height="819" loading="lazy" decoding="async"
+             alt="Line chart of FID-50K on a log scale against training steps from 100k to 1.6M for DiT-XL/2 and DyLoMo-DiT-XL. DyLoMo-DiT-XL stays below DiT-XL/2 throughout and ends at 2.18; a star marks the 2.27 reported for DiT-XL/2 at 7M steps.">
+      </div>
+      <figcaption>Training to 1.6M steps, XL tier (FID-50K on a log scale, guidance 1.5). From 400k on, the FID ratio stays within 0.76–0.82; points after 400k are single runs.</figcaption>
+    </figure>
+
+    <h3 class="sub">Text-to-image generation</h3>
+    <div class="prose">
+      <p>To test whether the design extends to text-conditioned generation, a single scaled-up model was trained, without ablations: width 1024, 32 physical layers with the middle 16 looped, and 4 routing heads with 128 experts each. It has 15.48B total parameters, of which 1.05B are active per image token.</p>
+      <p>Scored with one pipeline at each model's native resolution, it reaches a GenEval score of 0.714 at 1024², above FLUX.1-schnell (0.673) and FLUX.1-dev (0.671), while using 24% and 22% as much forward-pass compute.</p>
+    </div>
+    <p class="notice"><b>Intermediate checkpoint.</b> The released text-to-image weights are the checkpoint evaluated here. It is an intermediate checkpoint from a multi-stage training schedule and a research preview, not a final model.</p>
+
+    <div class="tbl-scroll block">
+      <table class="tbl">
+        <thead>
+          <tr><th scope="col">Model</th><th scope="col" class="left">GenEval ↑</th><th scope="col">Parameters (B)</th><th scope="col">Native resolution</th><th scope="col">GMAC</th></tr>
+        </thead>
+        <tbody>
+          <tr class="is-ours"><th scope="row">DyLoMo-DiT</th><td class="barcell"><div class="bar" style="--v:0.714" title="GenEval 0.714"><i></i><span>0.714</span></div></td><td>15.48 total / 1.05 active</td><td>1024²</td><td>8,333</td></tr>
+          <tr><th scope="row">FLUX.1-schnell</th><td class="barcell"><div class="bar" style="--v:0.673" title="GenEval 0.673"><i></i><span>0.673</span></div></td><td>12</td><td>1024²</td><td>34,733</td></tr>
+          <tr><th scope="row">FLUX.1-dev</th><td class="barcell"><div class="bar" style="--v:0.671" title="GenEval 0.671"><i></i><span>0.671</span></div></td><td>12</td><td>1024²</td><td>37,192</td></tr>
+          <tr><th scope="row">Sana-1.6B</th><td class="barcell"><div class="bar" style="--v:0.632" title="GenEval 0.632"><i></i><span>0.632</span></div></td><td>1.6</td><td>1024²</td><td>1,483</td></tr>
+          <tr><th scope="row">SDXL</th><td class="barcell"><div class="bar" style="--v:0.551" title="GenEval 0.551"><i></i><span>0.551</span></div></td><td>2.6</td><td>1024²</td><td>3,381</td></tr>
+          <tr><th scope="row">PixArt-α</th><td class="barcell"><div class="bar" style="--v:0.483" title="GenEval 0.483"><i></i><span>0.483</span></div></td><td>0.6</td><td>512²</td><td>618</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="swipe">Swipe sideways to see all columns.</p>
+    <p class="cap">GenEval recomputed with one pipeline at each model's native resolution. Parameters: denoiser only (DyLoMo-DiT: total / active per image token). GMAC: one forward pass of the denoiser at the native resolution. Bars start at zero. Differences smaller than 0.03 are treated as not meaningful.</p>
+  </div>
+</section>
+
+<section id="analysis" class="sec wrap">
+  <h2 class="sec__title">Analysis</h2>
+  <div class="sec__body">
+    <div class="prose">
+      <p>Extra passes help where the noise is low. Compared with two passes at every timestep, the allocated schedule has lower noise-prediction error at every <i>t</i> &lt; 500, by up to 0.6% around <i>t</i> = 150–200, slightly higher error just above 500, and similar error beyond 600.</p>
+      <p>The routers receive no explicit timestep input, yet routing specializes by noise level. The expert distribution shifts sharply between <i>t</i> = 550 and <i>t</i> = 560, and 47% of the experts receive more than 80% of their calls in one of the two ranges.</p>
+    </div>
+    <figure class="block fig--narrow">
+      <div class="frame">
+        <img src="static/img/noise_routing.png" width="1440" height="1288" loading="lazy" decoding="async"
+             alt="Two panels over the timestep axis from 0, clean, to 999, noise. Panel a: bars of the loss difference between allocated passes and two passes at every timestep; negative for timesteps below 500, where three passes run, and slightly positive just above 500. Panel b: a heat map with one row per expert showing when each of the 896 experts is used; 33 percent are used mainly at low noise, 14 percent mainly at high noise and 53 percent in both, with an abrupt switch between timesteps 550 and 560.">
+      </div>
+      <figcaption>Passes and routing by noise level (DyLoMo-DiT-XL). (a) Per-timestep loss of allocated passes relative to two passes at every <i>t</i>: the extra pass pays only at low noise. (b) When each expert is used (one row per expert; color relative to its own mean): a low-noise and a high-noise group, switching at <i>t</i> = 550→560 (dotted), away from the allocation boundary <i>t</i> = 500 (dashed).</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="samples" class="sec wrap">
+  <h2 class="sec__title">Samples</h2>
+  <div class="sec__body">
+    <h3 class="sub">Text-to-image</h3>
+    <div class="prose">
+      <p>Samples from the intermediate text-to-image checkpoint, at 1024×1024, 1808×1024 and 1024×1808, with 50 Euler steps and APG at guidance scale 5. The 51 samples below are selected from 892 generated images: 223 prompts in 13 categories, each generated with two seeds and two shift values. Select a sample to read its prompt.</p>
+    </div>
+    <ul class="gallery block">
+      <li style="--ar:1.0000"><a href="static/img/gallery/001.jpg" data-meta="No. 1 · Fashion"><img src="static/img/gallery/001.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A man in his forties with olive skin, salt-and-pepper hair, and a short beard stands against a sun-washed terracotta wall, wearing an unstructured sand-colored linen suit over a white open-collar…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/002.jpg" data-meta="No. 2 · Portrait"><img src="static/img/gallery/002.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A Latino man in his forties with sun-darkened skin, a thick dark mustache, and a straw hat stands at the end of a row of grapevines at dawn, holding a…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/003.jpg" data-meta="No. 3 · Animals"><img src="static/img/gallery/003.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A common kingfisher perches on a thin bare branch above a slow river, seen in profile facing left. Its back and wings are bright metallic blue, its chest is rusty…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/004.jpg" data-meta="No. 4 · Animals"><img src="static/img/gallery/004.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A green sea turtle swims slowly over a coral reef in clear turquoise water, seen from slightly above and to the side. Its shell is patterned with olive and brown…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/005.jpg" data-meta="No. 5 · Food"><img src="static/img/gallery/005.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A bowl of tonkotsu ramen sits on a dark wooden counter, photographed from a high angle. The creamy white broth is topped with two slices of pink-edged pork belly, a…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/006.jpg" data-meta="No. 6 · Food"><img src="static/img/gallery/006.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A breakfast plate on a white marble table, seen from directly above. Two slices of toasted sourdough are topped with mashed avocado, a poached egg with its yolk running onto…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/007.jpg" data-meta="No. 7 · Food"><img src="static/img/gallery/007.jpg" width="640" height="363" loading="lazy" decoding="async" alt="Skewers of marinated chicken and vegetables cook over glowing charcoal on an outdoor grill, seen from a low angle close to the grate. The chicken pieces are golden brown with…"></a></li>
+      <li style="--ar:0.5672"><a href="static/img/gallery/008.jpg" data-meta="No. 8 · Food"><img src="static/img/gallery/008.jpg" width="363" height="640" loading="lazy" decoding="async" alt="A slice of layered strawberry shortcake stands on a white ceramic plate on a light wooden table. The three layers of pale sponge are separated by whipped cream and halved…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/009.jpg" data-meta="No. 9 · Food"><img src="static/img/gallery/009.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A bakery display case seen from the customer&#x27;s side, filled with rows of baked goods on wooden trays: golden croissants with flaky layers, pain au chocolat, round sourdough loaves with…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/010.jpg" data-meta="No. 10 · Food"><img src="static/img/gallery/010.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A close-up of two hands dusting flour over fresh tagliatelle on a wooden board, with the long ribbons of pale yellow pasta coiled into loose nests. Beside the board lie…"></a></li>
+      <li style="--ar:0.5672"><a href="static/img/gallery/011.jpg" data-meta="No. 11 · Product"><img src="static/img/gallery/011.jpg" width="363" height="640" loading="lazy" decoding="async" alt="A rectangular glass perfume bottle stands on a plain beige surface in front of a matching beige background. The bottle is made of thick clear glass with sharp edges and…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/012.jpg" data-meta="No. 12 · Product"><img src="static/img/gallery/012.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A single white leather sneaker with a thick cream rubber sole and gray suede panels stands at a three-quarter angle on a plain light gray surface against a matching seamless…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/013.jpg" data-meta="No. 13 · Product"><img src="static/img/gallery/013.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A pair of matte black wireless earbuds rests in an open charging case on a smooth dark slate surface. The case lid is open at an angle, showing a small…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/014.jpg" data-meta="No. 14 · Product"><img src="static/img/gallery/014.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A cream-colored ceramic candle jar with a lit wick stands on a rough-textured beige linen cloth next to a dried pampas grass stem and a small wooden tray. The candle&#x27;s…"></a></li>
+      <li style="--ar:0.5672"><a href="static/img/gallery/015.jpg" data-meta="No. 15 · Product"><img src="static/img/gallery/015.jpg" width="363" height="640" loading="lazy" decoding="async" alt="A frosted glass dropper bottle filled with clear amber serum stands upright on a wet black stone surface, with water droplets scattered around its base. The bottle has a matte…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/016.jpg" data-meta="No. 16 · Product"><img src="static/img/gallery/016.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A set of three stainless-steel cooking pots with glass lids and riveted black handles is arranged on a light wooden countertop against a plain white background, sizes stepping down from…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/017.jpg" data-meta="No. 17 · Product"><img src="static/img/gallery/017.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A hard-shell suitcase in matte sage green with four spinner wheels and a telescoping handle stands upright on a plain pale-gray studio floor, next to a matching smaller carry-on. Both…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/018.jpg" data-meta="No. 18 · Product"><img src="static/img/gallery/018.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A set of children&#x27;s wooden building blocks in soft pastel colors, including cubes, arches, cylinders, and triangles in mint, peach, pale yellow, and natural beech, stacked into a small tower…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/019.jpg" data-meta="No. 19 · Nature"><img src="static/img/gallery/019.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A calm alpine lake at sunrise reflects a range of snow-capped mountains and a clear sky that shifts from pale orange near the peaks to deep blue above. The water…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/020.jpg" data-meta="No. 20 · Nature"><img src="static/img/gallery/020.jpg" width="640" height="363" loading="lazy" decoding="async" alt="Rugged coastal cliffs drop into the sea under a sunset sky streaked with orange and purple clouds. Waves break white against the dark rocks at the base of the cliffs.…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/021.jpg" data-meta="No. 21 · Nature"><img src="static/img/gallery/021.jpg" width="640" height="363" loading="lazy" decoding="async" alt="Rows of blooming lavender stretch toward a low hill with a single stone farmhouse in the distance, under a clear summer sky. The purple rows converge toward the horizon, and…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/022.jpg" data-meta="No. 22 · Nature"><img src="static/img/gallery/022.jpg" width="640" height="640" loading="lazy" decoding="async" alt="Cherry trees in full bloom lean over a narrow stream, their pale pink blossoms thick on every branch. Fallen petals float on the slow-moving water and gather along the mossy…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/023.jpg" data-meta="No. 23 · City"><img src="static/img/gallery/023.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A small fishing village of wooden houses painted red and white stands on stilts along the edge of a fjord, with steep green mountains rising behind. Several small boats are…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/024.jpg" data-meta="No. 24 · City"><img src="static/img/gallery/024.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A traditional East Asian courtyard seen from inside the gate, with a gray tiled roof, upturned eaves, and red wooden pillars framing a stone-paved yard. A large ceramic pot with…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/025.jpg" data-meta="No. 25 · Interior"><img src="static/img/gallery/025.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A bright living room in a Scandinavian style, with white walls, a light oak floor, and a large window on the left letting in daylight. A gray fabric sofa with…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/026.jpg" data-meta="No. 26 · Interior"><img src="static/img/gallery/026.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A spacious kitchen with a large white marble island, dark green cabinets with brass handles, and a white subway-tile backsplash. On the island are a wooden cutting board with sliced…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/027.jpg" data-meta="No. 27 · Interior"><img src="static/img/gallery/027.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A quiet Japanese-style tea room with tatami mats, sliding paper screens on the left letting in soft light, and a low wooden table with a black iron teapot and two…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/028.jpg" data-meta="No. 28 · Interior"><img src="static/img/gallery/028.jpg" width="640" height="363" loading="lazy" decoding="async" alt="An artist&#x27;s loft studio with high ceilings, large north-facing windows, and white brick walls. A wooden easel holds a large canvas in progress with abstract blocks of blue and ochre.…"></a></li>
+      <li style="--ar:0.5672"><a href="static/img/gallery/029.jpg" data-meta="No. 29 · Interior"><img src="static/img/gallery/029.jpg" width="363" height="640" loading="lazy" decoding="async" alt="A bathroom with a freestanding white oval bathtub on a terrazzo floor, a wooden stool holding a folded white towel and a bar of soap, and a large frosted window…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/030.jpg" data-meta="No. 30 · Light and macro"><img src="static/img/gallery/030.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A close-up of a single dandelion seed head backlit by the low evening sun, with each fine seed filament glowing white against a dark, blurred green background. A few seeds…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/031.jpg" data-meta="No. 31 · Light and macro"><img src="static/img/gallery/031.jpg" width="640" height="640" loading="lazy" decoding="async" alt="An extreme close-up of a green leaf with water droplets resting on its surface, each drop reflecting a tiny inverted image of the surroundings. The leaf&#x27;s veins form a fine…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/032.jpg" data-meta="No. 32 · Light and macro"><img src="static/img/gallery/032.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A macro photo of a honeybee landing on a purple cosmos flower, with its wings slightly blurred and its hairy legs dusted with yellow pollen. The flower&#x27;s petals are sharp…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/033.jpg" data-meta="No. 33 · Light and macro"><img src="static/img/gallery/033.jpg" width="640" height="363" loading="lazy" decoding="async" alt="Sunlight passes through a half-open wooden window blind and falls across a white wall and a wooden table in a quiet room, creating a pattern of sharp light and shadow…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/034.jpg" data-meta="No. 34 · Light and macro"><img src="static/img/gallery/034.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A close-up of clear ice cubes stacked in a short crystal glass on a dark surface, with a splash of amber liquid being poured in and frozen mid-motion. The cubes…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/035.jpg" data-meta="No. 35 · Light and macro"><img src="static/img/gallery/035.jpg" width="640" height="640" loading="lazy" decoding="async" alt="An extreme macro of a single snowflake resting on a strand of dark blue wool, showing its six symmetrical arms with fine branching plates and sharp hexagonal facets. Tiny air…"></a></li>
+      <li style="--ar:0.5672"><a href="static/img/gallery/036.jpg" data-meta="No. 36 · Light and macro"><img src="static/img/gallery/036.jpg" width="363" height="640" loading="lazy" decoding="async" alt="A woman in her fifties with gray-streaked dark hair and medium brown skin sits in a wooden chair beside a tall window, reading a handwritten letter held in both hands.…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/037.jpg" data-meta="No. 37 · Illustration"><img src="static/img/gallery/037.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A watercolor illustration of a quiet street in a small European town, with tall narrow houses in soft washes of ochre, rose, and pale blue, their windows shuttered and flower…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/038.jpg" data-meta="No. 38 · Illustration"><img src="static/img/gallery/038.jpg" width="640" height="640" loading="lazy" decoding="async" alt="An oil painting of a field of sunflowers under a bright summer sky, with thick impasto brushstrokes building up the yellow petals and dark brown centers. The nearest flowers are…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/039.jpg" data-meta="No. 39 · Illustration"><img src="static/img/gallery/039.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A 3D rendered cartoon scene of a small orange fox with large round eyes and a fluffy white-tipped tail sitting on a mossy log in a sunny forest clearing. The…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/040.jpg" data-meta="No. 40 · Illustration"><img src="static/img/gallery/040.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A flat vector illustration of a beach scene with a striped umbrella, a folded deck chair, and a surfboard planted upright in the sand, with gentle stylized waves and a…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/041.jpg" data-meta="No. 41 · Illustration"><img src="static/img/gallery/041.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A children&#x27;s picture book illustration of a bear, a rabbit, and a hedgehog having a tea party at a small table under a large tree, drawn with soft colored-pencil textures…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/042.jpg" data-meta="No. 42 · Illustration"><img src="static/img/gallery/042.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A low-poly 3D render of a mountain landscape at sunrise, with faceted peaks in shades of blue and purple, a flat triangular lake reflecting the sky, and a small pine…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/043.jpg" data-meta="No. 43 · Illustration"><img src="static/img/gallery/043.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A cartoon illustration of a round, chubby penguin wearing a tall white chef&#x27;s hat and a small red neckerchief, standing on a stool and stirring a big pot of soup…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/044.jpg" data-meta="No. 44 · Fantasy"><img src="static/img/gallery/044.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A floating island drifts among towering cumulus clouds at golden hour, carrying a small stone castle with pointed turrets, a waterfall that pours off the island&#x27;s edge and dissolves into…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/045.jpg" data-meta="No. 45 · Fantasy"><img src="static/img/gallery/045.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A small green dragon the size of a cat, with folded leathery wings and bright golden eyes, sits curled on a stack of old books on a wooden desk in…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/046.jpg" data-meta="No. 46 · Fantasy"><img src="static/img/gallery/046.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A colossal weathered stone statue of a seated figure, half-buried in desert sand, rises above a line of dunes at sunset. Its surface is cracked and streaked with centuries of…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/047.jpg" data-meta="No. 47 · Fantasy"><img src="static/img/gallery/047.jpg" width="640" height="363" loading="lazy" decoding="async" alt="An underwater city of domed glass buildings and glowing walkways lies on the seabed in clear blue water, with schools of fish swimming between the towers and sunlight from the…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/048.jpg" data-meta="No. 48 · Fantasy"><img src="static/img/gallery/048.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A whimsical cottage shaped like a giant teapot stands in a meadow under a starry night sky, with warm light glowing from its round windows and a thin stream of…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/049.jpg" data-meta="No. 49 · Fantasy"><img src="static/img/gallery/049.jpg" width="640" height="363" loading="lazy" decoding="async" alt="An enormous whale glides slowly through the sky above a modern city at sunset, casting a long shadow across the rooftops, with people on a rooftop terrace in the foreground…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/050.jpg" data-meta="No. 50 · Text"><img src="static/img/gallery/050.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A glowing neon sign reading “OPEN” in bright pink cursive letters hangs in the window of a small diner at night, with the glass reflecting the wet street outside. Behind…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/051.jpg" data-meta="No. 51 · Text"><img src="static/img/gallery/051.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A small paper candy bag in pale pink stands on a white surface, with the word “SWEET” printed in rounded white letters across the front. The bag is slightly open…"></a></li>
+    </ul>
+    <details>
+      <summary>More samples by category (52)</summary>
+      <p class="cap">Four further samples for each of the 13 categories, from the same 892 images. None of them is among the 51 samples above.</p>
+      <h4 class="cat">Portrait</h4>
+      <ul class="gallery">
+      <li style="--ar:1.0000"><a href="static/img/gallery/052.jpg" data-meta="No. 52 · Portrait"><img src="static/img/gallery/052.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A studio portrait of a young Black woman with a full natural afro and smooth dark skin, looking straight into the camera with a confident, closed-mouth smile. She wears a…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/053.jpg" data-meta="No. 53 · Portrait"><img src="static/img/gallery/053.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A close-up portrait of a teenage girl with red curly hair and a face covered in freckles, looking slightly past the camera with a thoughtful expression. She wears a plain…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/054.jpg" data-meta="No. 54 · Portrait"><img src="static/img/gallery/054.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A Thai woman in her sixties with gray hair tied back and a wide, warm smile stands behind her fruit stall in a covered daytime market, resting one hand on…"></a></li>
+      <li style="--ar:0.5672"><a href="static/img/gallery/055.jpg" data-meta="No. 55 · Portrait"><img src="static/img/gallery/055.jpg" width="363" height="640" loading="lazy" decoding="async" alt="A young South Asian man in his twenties stands on a wet city sidewalk after rain, looking directly into the camera with a calm expression. He has short black hair,…"></a></li>
+      </ul>
+      <h4 class="cat">People</h4>
+      <ul class="gallery">
+      <li style="--ar:1.0000"><a href="static/img/gallery/056.jpg" data-meta="No. 56 · People"><img src="static/img/gallery/056.jpg" width="640" height="640" loading="lazy" decoding="async" alt="An elderly man with white hair and a brown cardigan sits across a small wooden table from a boy of about nine, playing chess. The boy leans forward on his…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/057.jpg" data-meta="No. 57 · People"><img src="static/img/gallery/057.jpg" width="640" height="363" loading="lazy" decoding="async" alt="Three friends in their late twenties sit on a checkered picnic blanket on a grassy lawn under a large oak tree. A Black woman with short natural hair laughs while…"></a></li>
+      <li style="--ar:0.5672"><a href="static/img/gallery/058.jpg" data-meta="No. 58 · People"><img src="static/img/gallery/058.jpg" width="363" height="640" loading="lazy" decoding="async" alt="A mother and her daughter of about five water plants together on a small apartment balcony. The mother, a woman with long black hair in a loose braid and a…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/059.jpg" data-meta="No. 59 · People"><img src="static/img/gallery/059.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A couple in their forties shops at an outdoor farmers market on a bright morning. The woman, with East Asian features and a short bob, holds a woven basket and…"></a></li>
+      </ul>
+      <h4 class="cat">Fashion</h4>
+      <ul class="gallery">
+      <li style="--ar:1.7631"><a href="static/img/gallery/060.jpg" data-meta="No. 60 · Fashion"><img src="static/img/gallery/060.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A man in his thirties with brown skin and a short beard walks along the waterline of a sandy beach, wearing an open short-sleeved shirt with a blue-and-white palm leaf…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/061.jpg" data-meta="No. 61 · Fashion"><img src="static/img/gallery/061.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A close-up of a woman&#x27;s neck and jawline from the side, showing a silk scarf in a navy-and-cream geometric pattern tied loosely at the neck, a large gold hoop earring,…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/062.jpg" data-meta="No. 62 · Fashion"><img src="static/img/gallery/062.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A woman in her late twenties with light brown skin and a short platinum pixie cut leans against a plain brick wall on an autumn street, wearing a fitted black…"></a></li>
+      <li style="--ar:0.5672"><a href="static/img/gallery/063.jpg" data-meta="No. 63 · Fashion"><img src="static/img/gallery/063.jpg" width="363" height="640" loading="lazy" decoding="async" alt="A young Black man in his early twenties walks along a tree-lined campus path in autumn, wearing a brown herringbone tweed blazer over a cream turtleneck, dark green corduroy trousers,…"></a></li>
+      </ul>
+      <h4 class="cat">Animals</h4>
+      <ul class="gallery">
+      <li style="--ar:1.0000"><a href="static/img/gallery/064.jpg" data-meta="No. 64 · Animals"><img src="static/img/gallery/064.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A brown and white tawny owl sits inside the hollow of an old oak tree, its round face framed by the rough bark of the opening, with wide dark eyes…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/065.jpg" data-meta="No. 65 · Animals"><img src="static/img/gallery/065.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A red deer stag with a full set of antlers stands at the edge of a misty pond at dawn, head turned toward the camera, with its front hooves in…"></a></li>
+      <li style="--ar:0.5672"><a href="static/img/gallery/066.jpg" data-meta="No. 66 · Animals"><img src="static/img/gallery/066.jpg" width="363" height="640" loading="lazy" decoding="async" alt="A scarlet macaw perches on a thick mossy branch in a tropical forest, its head turned to the side to show the bright red plumage, yellow and blue wing feathers,…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/067.jpg" data-meta="No. 67 · Animals"><img src="static/img/gallery/067.jpg" width="640" height="363" loading="lazy" decoding="async" alt="An adult African elephant walks slowly across dry golden grassland with a small calf close at her side, the calf&#x27;s trunk curled up to touch her front leg. Their gray…"></a></li>
+      </ul>
+      <h4 class="cat">Food</h4>
+      <ul class="gallery">
+      <li style="--ar:1.7631"><a href="static/img/gallery/068.jpg" data-meta="No. 68 · Food"><img src="static/img/gallery/068.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A freshly baked Margherita pizza on a wooden peel just pulled from a wood-fired brick oven, with a blistered, lightly charred crust, bubbling melted mozzarella, bright red tomato sauce, and…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/069.jpg" data-meta="No. 69 · Food"><img src="static/img/gallery/069.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A bubbling hot pot with a divided pot of red spicy broth on one side and clear mushroom broth on the other sits on a portable burner in the center…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/070.jpg" data-meta="No. 70 · Food"><img src="static/img/gallery/070.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A plate of Thai mango sticky rice on a banana leaf, with a neat mound of white sticky rice drizzled with coconut cream, sprinkled with toasted yellow mung beans, and…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/071.jpg" data-meta="No. 71 · Food"><img src="static/img/gallery/071.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A top-down close-up of a matcha latte in a wide ceramic cup with a speckled gray glaze, with a white milk-foam rosetta pattern poured into the bright green surface. The…"></a></li>
+      </ul>
+      <h4 class="cat">Product</h4>
+      <ul class="gallery">
+      <li style="--ar:1.0000"><a href="static/img/gallery/072.jpg" data-meta="No. 72 · Product"><img src="static/img/gallery/072.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A structured handbag in cognac-brown pebbled leather sits on a white marble pedestal against a soft beige backdrop. The bag has two rolled top handles, a gold-toned clasp, and visible…"></a></li>
+      <li style="--ar:0.5672"><a href="static/img/gallery/073.jpg" data-meta="No. 73 · Product"><img src="static/img/gallery/073.jpg" width="363" height="640" loading="lazy" decoding="async" alt="A single matte red lipstick in a slim black cylindrical case stands upright on a white marble surface, with the cap removed and placed beside it, the bullet of lipstick…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/074.jpg" data-meta="No. 74 · Product"><img src="static/img/gallery/074.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A pair of trail running shoes in coral and dark gray mesh with aggressive black rubber lugs stands side by side on a flat piece of wet slate rock, with…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/075.jpg" data-meta="No. 75 · Product"><img src="static/img/gallery/075.jpg" width="640" height="363" loading="lazy" decoding="async" alt="Four handmade ceramic mugs in a row on a plain white shelf against a seamless light gray wall, glazed in muted terracotta, sage green, cream, and charcoal, each with a…"></a></li>
+      </ul>
+      <h4 class="cat">Nature</h4>
+      <ul class="gallery">
+      <li style="--ar:1.7631"><a href="static/img/gallery/076.jpg" data-meta="No. 76 · Nature"><img src="static/img/gallery/076.jpg" width="640" height="363" loading="lazy" decoding="async" alt="Curved terraces of young green rice fill a steep hillside, each step holding a thin sheet of water that mirrors the pale orange sky at sunrise. Low mist drifts in…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/077.jpg" data-meta="No. 77 · Nature"><img src="static/img/gallery/077.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A black sand beach under a dramatic overcast sky, with tall basalt sea stacks rising from the water near the shore. Waves roll in with white foam that spreads thinly…"></a></li>
+      <li style="--ar:0.5672"><a href="static/img/gallery/078.jpg" data-meta="No. 78 · Nature"><img src="static/img/gallery/078.jpg" width="363" height="640" loading="lazy" decoding="async" alt="The inside of a narrow sandstone slot canyon, with smooth, wave-like walls in layered bands of orange, red, and purple curving upward toward a thin strip of sky. A single…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/079.jpg" data-meta="No. 79 · Nature"><img src="static/img/gallery/079.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A single large oak tree stands alone in the middle of a flat meadow covered in low morning mist, its full green canopy lit from the side by the rising…"></a></li>
+      </ul>
+      <h4 class="cat">City</h4>
+      <ul class="gallery">
+      <li style="--ar:1.7631"><a href="static/img/gallery/080.jpg" data-meta="No. 80 · City"><img src="static/img/gallery/080.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A row of narrow houses painted in deep red, ochre, forest green, and pale blue stands along a calm canal, with tall windows, white trim, and steep gabled roofs. Their…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/081.jpg" data-meta="No. 81 · City"><img src="static/img/gallery/081.jpg" width="640" height="640" loading="lazy" decoding="async" alt="The exterior of a modern public library built from pale concrete and warm wooden slats, with large windows revealing bookshelves inside. A wide set of steps leads up to the…"></a></li>
+      <li style="--ar:0.5672"><a href="static/img/gallery/082.jpg" data-meta="No. 82 · City"><img src="static/img/gallery/082.jpg" width="363" height="640" loading="lazy" decoding="async" alt="A small yellow tram climbs a steep narrow cobblestone street between tall old apartment buildings with tiled facades in faded blue, white, and pink. Laundry hangs from a few balconies,…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/083.jpg" data-meta="No. 83 · City"><img src="static/img/gallery/083.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A long suspension bridge spans a wide river at dusk, its two tall towers and cables lit by warm lamps. Cars on the bridge form streaks of red and white…"></a></li>
+      </ul>
+      <h4 class="cat">Interior</h4>
+      <ul class="gallery">
+      <li style="--ar:0.5672"><a href="static/img/gallery/084.jpg" data-meta="No. 84 · Interior"><img src="static/img/gallery/084.jpg" width="363" height="640" loading="lazy" decoding="async" alt="A cozy home study with floor-to-ceiling wooden bookshelves packed with books of many colors, a leather armchair in dark brown, and a small side table holding a reading lamp and…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/085.jpg" data-meta="No. 85 · Interior"><img src="static/img/gallery/085.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A dining room with a long oval table of pale oak surrounded by six curved chairs in dark green fabric, set under a row of three round paper pendant lamps.…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/086.jpg" data-meta="No. 86 · Interior"><img src="static/img/gallery/086.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A bright children&#x27;s bedroom with a low wooden bed under a soft white canopy, a pale green wall, and a round woven rug on the light wood floor. A small…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/087.jpg" data-meta="No. 87 · Interior"><img src="static/img/gallery/087.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A glass conservatory attached to an old house, filled with potted plants of many sizes: tall palms, trailing ivy, ferns on a wooden stand, and small cacti along the windowsill.…"></a></li>
+      </ul>
+      <h4 class="cat">Light and macro</h4>
+      <ul class="gallery">
+      <li style="--ar:1.7631"><a href="static/img/gallery/088.jpg" data-meta="No. 88 · Light and macro"><img src="static/img/gallery/088.jpg" width="640" height="363" loading="lazy" decoding="async" alt="Tall pine trees in a quiet forest at early morning, with beams of sunlight breaking through the mist between the trunks and falling in bright diagonal shafts onto a floor…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/089.jpg" data-meta="No. 89 · Light and macro"><img src="static/img/gallery/089.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A cyclist rides along the crest of a low hill, seen as a sharp black silhouette against an enormous orange and red sunset sky with thin horizontal clouds. The bicycle&#x27;s…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/090.jpg" data-meta="No. 90 · Light and macro"><img src="static/img/gallery/090.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A close-up of a circular spider web stretched between two dry grass stems, each strand lined with tiny beads of dew that sparkle in the low morning sun coming from…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/091.jpg" data-meta="No. 91 · Light and macro"><img src="static/img/gallery/091.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A macro close-up of a single soap bubble resting on a wet dark surface, its thin film swirling with bands of iridescent color in blue, magenta, green, and gold. The…"></a></li>
+      </ul>
+      <h4 class="cat">Illustration</h4>
+      <ul class="gallery">
+      <li style="--ar:1.7631"><a href="static/img/gallery/092.jpg" data-meta="No. 92 · Illustration"><img src="static/img/gallery/092.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A pixel art illustration of a small village at sunset, with a row of cottages with chimneys, a stone well, a winding dirt path, and a windmill on a hill,…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/093.jpg" data-meta="No. 93 · Illustration"><img src="static/img/gallery/093.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A gouache painting of a lighthouse on a rocky cliff at night, with a beam of warm yellow light sweeping across a dark blue sky scattered with small painted stars.…"></a></li>
+      <li style="--ar:0.5672"><a href="static/img/gallery/094.jpg" data-meta="No. 94 · Illustration"><img src="static/img/gallery/094.jpg" width="363" height="640" loading="lazy" decoding="async" alt="A layered paper-cut illustration of a forest at dusk, with silhouetted trees in four stacked layers of paper in deep teal, mid blue, light blue, and cream, each layer casting…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/095.jpg" data-meta="No. 95 · Illustration"><img src="static/img/gallery/095.jpg" width="640" height="640" loading="lazy" decoding="async" alt="An isometric 3D render of a small cozy room floating on a white background, with a bed under a round window, a wooden desk with a lamp and a potted…"></a></li>
+      </ul>
+      <h4 class="cat">Fantasy</h4>
+      <ul class="gallery">
+      <li style="--ar:1.0000"><a href="static/img/gallery/096.jpg" data-meta="No. 96 · Fantasy"><img src="static/img/gallery/096.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A fox standing in a quiet autumn forest, its entire body made of layered red, orange, and yellow fallen leaves, with twigs forming its legs and two bright amber berries…"></a></li>
+      <li style="--ar:0.5672"><a href="static/img/gallery/097.jpg" data-meta="No. 97 · Fantasy"><img src="static/img/gallery/097.jpg" width="363" height="640" loading="lazy" decoding="async" alt="A tall glass hourglass standing on a wooden table, with a miniature ocean inside the upper bulb, complete with rolling waves, white foam, and a tiny sailing boat, slowly pouring…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/098.jpg" data-meta="No. 98 · Fantasy"><img src="static/img/gallery/098.jpg" width="640" height="363" loading="lazy" decoding="async" alt="An enormous tortoise walks slowly across a grassy plain, carrying a small village on its mossy shell: stone cottages, a windmill, a pond, and a few trees, with a winding…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/099.jpg" data-meta="No. 99 · Fantasy"><img src="static/img/gallery/099.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A large airship with a weathered brass hull, canvas balloon, spinning propellers, and rows of round windows flies between snow-capped mountain peaks at sunrise. Steam trails from two pipes along…"></a></li>
+      </ul>
+      <h4 class="cat">Text</h4>
+      <ul class="gallery">
+      <li style="--ar:1.0000"><a href="static/img/gallery/100.jpg" data-meta="No. 100 · Text"><img src="static/img/gallery/100.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A small chalkboard sign on a wooden easel stands in front of a fruit juice stall, with the words “FRESH JUICE” written in neat white chalk capital letters and a…"></a></li>
+      <li style="--ar:1.7631"><a href="static/img/gallery/101.jpg" data-meta="No. 101 · Text"><img src="static/img/gallery/101.jpg" width="640" height="363" loading="lazy" decoding="async" alt="A rustic wooden sign hangs above the door of a small coffee shop, with the word “COFFEE” carved and painted in white serif capital letters. The sign hangs from two…"></a></li>
+      <li style="--ar:0.5672"><a href="static/img/gallery/102.jpg" data-meta="No. 102 · Text"><img src="static/img/gallery/102.jpg" width="363" height="640" loading="lazy" decoding="async" alt="A tall vertical neon sign reading “HOTEL” in glowing warm white capital letters, one letter above the next, is mounted on the corner of an old brick building at night.…"></a></li>
+      <li style="--ar:1.0000"><a href="static/img/gallery/103.jpg" data-meta="No. 103 · Text"><img src="static/img/gallery/103.jpg" width="640" height="640" loading="lazy" decoding="async" alt="A rectangular coir doormat with the word “WELCOME” printed in bold black capital letters lies on a gray stone doorstep in front of a dark green painted wooden door with…"></a></li>
+      </ul>
+    </details>
+
+    <h3 class="sub">ImageNet 256×256, same class and same noise</h3>
+    <figure class="pair">
+      <div class="frame">
+        <img src="static/img/in256_pairs.jpg" width="1320" height="2124" loading="lazy" decoding="async"
+             alt="Class-conditional samples in six rows: otter, golden retriever, macaw, arctic fox, suspension bridge, espresso. In each row, the left pair is at the compute of DiT-XL/2 and the right pair at the budget of DiT-MoE-L. Each pair shares the class label and noise.">
+      </div>
+      <figcaption>Class-conditional samples (400k steps, guidance scale 4.0); rows: otter, golden retriever, macaw, arctic fox, suspension bridge, espresso. Left: at the compute of DiT-XL/2; right: at the budget of DiT-MoE-L. Each pair shares the class label and noise.</figcaption>
+    </figure>
+    <details>
+      <summary>More same-noise pairs</summary>
+      <p class="cap">These are single samples per noise and serve only as a qualitative reference.</p>
+      <figure class="block">
+        <div class="frame fig-scroll" style="--min:44rem">
+          <img src="static/img/in256_pairs_more_xl.jpg" width="2070" height="800" loading="lazy" decoding="async"
+               alt="Six additional same-noise pairs at the compute of DiT-XL/2: monarch, suspension bridge, loggerhead, king penguin, Pembroke, bald eagle. In each pair, DyLoMo-DiT-XL is on the left and DiT-XL/2 on the right.">
+        </div>
+        <figcaption>Additional samples for the left half of the figure above, in the same setting (compute of DiT-XL/2; 400k-step EMA weights, guidance scale 4.0, 250 DDPM steps). In each pair, DyLoMo-DiT-XL is on the left and DiT-XL/2 on the right.</figcaption>
+      </figure>
+      <figure class="block">
+        <div class="frame fig-scroll" style="--min:44rem">
+          <img src="static/img/in256_pairs_more_ditmoe.jpg" width="2070" height="633" loading="lazy" decoding="async"
+               alt="Eight further same-noise pairs at the budget of DiT-MoE-L. In each pair, the DyLoMo-DiT of Table 3 of the paper (L row) is on the left and DiT-MoE-L on the right.">
+        </div>
+        <figcaption>Further same-noise pairs at the budget of DiT-MoE-L (2.82B parameters, 222 GMAC; 400k-step EMA weights, guidance scale 4.0, 250 DDPM steps). In each pair, the DyLoMo-DiT of Table 3 of the paper (L row) is on the left and DiT-MoE-L on the right.</figcaption>
+      </figure>
+    </details>
+  </div>
+</section>
+
+<section id="license" class="sec wrap">
+  <h2 class="sec__title">Release and license</h2>
+  <div class="sec__body prose">
+    <p>The code is released under <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache-2.0</a>. Both the ImageNet and text-to-image weights are released under <a href="https://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)</a>.</p>
+    <p>The text-to-image release is an intermediate checkpoint. Its sharded safetensors store routed-expert parameters in bf16 and all remaining parameters in fp32, about 32 GB of weights. Each shard uses a tensor-data budget of 10 GB. Download the config, index and every shard from the <a href="https://huggingface.co/OneCreamBox/DyLoMo-DiT-T2I-Preview">model repository</a>; the released code loads this format and runs under bf16 autocast. This storage size is not a peak-memory estimate.</p>
+  </div>
+</section>
+
+<section id="cite" class="sec wrap">
+  <h2 class="sec__title">Cite</h2>
+  <div class="sec__body">
+    <div class="codebox">
+      <button class="copy" type="button">Copy</button>
+<pre id="bibtex">@article{dylomodit,
+  title   = {DyLoMo-DiT: Dynamic Looped Mixture-of-Experts Diffusion Transformers},
+  author  = {Li, Lernie and Liu, Yuanliu and Xiong, Pengfei and Zhang, Wei},
+  journal = {arXiv preprint},
+  year    = {2026}
+}</pre>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p>Figures and samples on this page are taken from the paper. Gallery prompts are cut after the 30th word, as in the paper's prompt table.</p>
+  </div>
+</footer>
+
+<dialog class="viewer" id="viewer" aria-label="Sample and prompt">
+  <div class="viewer__frame"><img class="viewer__img" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt=""></div>
+  <div class="viewer__body">
+    <p class="viewer__meta"></p>
+    <p class="viewer__prompt"></p>
+    <div class="viewer__bar">
+      <button type="button" class="viewer__prev">Previous</button>
+      <button type="button" class="viewer__next">Next</button>
+      <button type="button" class="viewer__close">Close</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  var root = document.documentElement;
+
+  var themeBtn = document.querySelector(".theme");
+  if (themeBtn) {
+    themeBtn.addEventListener("click", function () {
+      var dark = root.dataset.theme
+        ? root.dataset.theme === "dark"
+        : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      var next = dark ? "light" : "dark";
+      root.dataset.theme = next;
+      try { localStorage.setItem("theme", next); } catch (e) {}
+    });
+  }
+
+  var copyBtn = document.querySelector(".copy");
+  var bib = document.getElementById("bibtex");
+  if (copyBtn && bib) {
+    copyBtn.addEventListener("click", function () {
+      var done = function () {
+        copyBtn.textContent = "Copied";
+        setTimeout(function () { copyBtn.textContent = "Copy"; }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(bib.textContent).then(done, function () {});
+      } else {
+        var r = document.createRange();
+        r.selectNodeContents(bib);
+        var s = window.getSelection();
+        s.removeAllRanges();
+        s.addRange(r);
+        try { document.execCommand("copy"); done(); } catch (e) {}
+      }
+    });
+  }
+
+  // "swipe sideways" hints are shown only while their figure or table really overflows
+  var hints = Array.prototype.slice.call(document.querySelectorAll(".swipe"));
+  var syncHints = function () {
+    hints.forEach(function (h) {
+      var box = h.previousElementSibling;
+      h.hidden = !(box && box.scrollWidth > box.clientWidth + 1);
+    });
+  };
+  syncHints();
+  window.addEventListener("resize", syncHints);
+  window.addEventListener("load", syncHints);
+
+  var dlg = document.getElementById("viewer");
+  if (dlg && typeof dlg.showModal === "function") {
+    var links = Array.prototype.slice.call(document.querySelectorAll(".gallery a"));
+    var img = dlg.querySelector(".viewer__img");
+    var meta = dlg.querySelector(".viewer__meta");
+    var prompt = dlg.querySelector(".viewer__prompt");
+    var at = 0;
+    var show = function (i) {
+      at = (i + links.length) % links.length;
+      var a = links[at];
+      var thumb = a.querySelector("img");
+      img.width = thumb.getAttribute("width");
+      img.height = thumb.getAttribute("height");
+      img.src = a.getAttribute("href");
+      img.alt = thumb.alt;
+      meta.textContent = a.dataset.meta;
+      prompt.textContent = thumb.alt;
+    };
+    links.forEach(function (a, i) {
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        show(i);
+        if (!dlg.open) dlg.showModal();
+      });
+    });
+    dlg.querySelector(".viewer__prev").addEventListener("click", function () { show(at - 1); });
+    dlg.querySelector(".viewer__next").addEventListener("click", function () { show(at + 1); });
+    dlg.querySelector(".viewer__close").addEventListener("click", function () { dlg.close(); });
+    dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+    dlg.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft") show(at - 1);
+      if (e.key === "ArrowRight") show(at + 1);
+    });
+  }
+})();
+</script>
+</body>
+</html>
