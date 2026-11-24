@@ -6,7 +6,7 @@
 
 Lernie Li &nbsp;·&nbsp; Yuanliu Liu &nbsp;·&nbsp; Pengfei Xiong &nbsp;·&nbsp; Wei Zhang
 
-<a href="https://arxiv.org/search/?query=DyLoMo-DiT&searchtype=all"><img src="https://img.shields.io/badge/arXiv-Paper-b31b1b.svg?logo=arxiv" height="22"></a>
+<a href="https://arxiv.org/abs/2611.30844"><img src="https://img.shields.io/badge/arXiv-2611.30844-b31b1b.svg?logo=arxiv" height="22"></a>
 <a href="https://oneboxcream.github.io/DyLoMo-DiT/"><img src="https://img.shields.io/badge/Project-Page-1f4e8c.svg" height="22"></a>
 <a href="https://huggingface.co/OneCreamBox/DyLoMo-DiT-ImageNet256"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Weights-ImageNet%20256-d96902.svg" height="22"></a>
 <a href="https://huggingface.co/OneCreamBox/DyLoMo-DiT-T2I-Preview"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Weights-Text--to--Image%20preview-d96902.svg" height="22"></a>
@@ -466,7 +466,7 @@ on ImageNet-1k, whose terms of access restrict it to non-commercial research and
 @article{dylomodit,
   title   = {DyLoMo-DiT: Dynamic Looped Mixture-of-Experts Diffusion Transformers},
   author  = {Li, Lernie and Liu, Yuanliu and Xiong, Pengfei and Zhang, Wei},
-  journal = {arXiv preprint},
+  journal = {arXiv preprint arXiv:2611.30844},
   year    = {2026}
 }
 ```

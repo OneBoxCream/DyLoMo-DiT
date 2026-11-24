@@ -14,3 +14,22 @@ authors:
 repository-code: "https://github.com/OneBoxCream/DyLoMo-DiT"
 url: "https://oneboxcream.github.io/DyLoMo-DiT/"
 license: Apache-2.0
+identifiers:
+  - type: url
+    value: "https://arxiv.org/abs/2611.30844"
+    description: "arXiv abstract page"
+preferred-citation:
+  type: article
+  title: "DyLoMo-DiT: Dynamic Looped Mixture-of-Experts Diffusion Transformers"
+  authors:
+    - family-names: Li
+      given-names: Lernie
+    - family-names: Liu
+      given-names: Yuanliu
+    - family-names: Xiong
+      given-names: Pengfei
+    - family-names: Zhang
+      given-names: Wei
+  journal: "arXiv preprint arXiv:2611.30844"
+  year: 2026
+  url: "https://arxiv.org/abs/2611.30844"
