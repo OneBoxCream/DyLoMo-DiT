@@ -209,7 +209,7 @@
     <h3 class="sub">Text-to-image generation</h3>
     <div class="prose">
       <p>To test whether the design extends to text-conditioned generation, a single scaled-up model was trained, without ablations: width 1024, 32 physical layers with the middle 16 looped, and 4 routing heads with 128 experts each. It has 15.48B total parameters, of which 1.05B are active per image token.</p>
-      <p>Scored with one pipeline at each model's native resolution, it reaches a GenEval score of 0.714 at 1024², above FLUX.1-schnell (0.673) and FLUX.1-dev (0.671), while using 24% and 22% as much forward-pass compute.</p>
+      <p>Scored with one pipeline at each model's native resolution, it reaches a GenEval score of 0.714 at 1024², above FLUX.1-schnell (0.673) and FLUX.1-dev (0.671), while using 24% and 22% as much forward-pass compute. Of the four models compared at 1024², it also has the lowest COCO FID-10K (17.9, against 22.4 to 28.6) and the highest DPG-Bench score (85.0), level with FLUX.1-schnell (84.8) within the 95% interval.</p>
     </div>
     <p class="notice"><b>Intermediate checkpoint.</b> The released text-to-image weights are the checkpoint evaluated here. It is an intermediate checkpoint from a multi-stage training schedule and a research preview, not a final model.</p>
 
@@ -230,6 +230,21 @@
     </div>
     <p class="swipe">Swipe sideways to see all columns.</p>
     <p class="cap">GenEval recomputed with one pipeline at each model's native resolution. Parameters: denoiser only (DyLoMo-DiT: total / active per image token). GMAC: one forward pass of the denoiser at the native resolution. Bars start at zero. Differences smaller than 0.03 are treated as not meaningful.</p>
+
+    <div class="tbl-scroll block">
+      <table class="tbl">
+        <thead>
+          <tr><th scope="col">Model</th><th scope="col">DPG-Bench ↑</th><th scope="col">95% interval</th><th scope="col">COCO FID-10K ↓</th></tr>
+        </thead>
+        <tbody>
+          <tr class="is-ours"><th scope="row">DyLoMo-DiT</th><td>85.0</td><td>[83.9, 86.0]</td><td>17.9</td></tr>
+          <tr><th scope="row">FLUX.1-schnell</th><td>84.8</td><td>[83.7, 85.8]</td><td>22.4</td></tr>
+          <tr><th scope="row">Sana-1.6B</th><td>83.9</td><td>[82.9, 84.9]</td><td>27.0</td></tr>
+          <tr><th scope="row">FLUX.1-dev</th><td>83.6</td><td>[82.6, 84.7]</td><td>28.6</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">DPG-Bench and COCO FID-10K of the four models with the highest GenEval, each at 1024² with the checkpoint and sampling settings of the table above. DPG-Bench: 1,065 prompts with 4 images each; 95% intervals from resampling the prompts. COCO FID-10K: the first 10,000 captions of the MS-COCO val2014 list, one image per caption, resized to 256×256 before FID, one generation run per model; comparable within this table only.</p>
   </div>
 </section>
 
