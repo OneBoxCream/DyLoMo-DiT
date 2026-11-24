@@ -82,7 +82,9 @@ of the FID protocol, a minimal text-to-image pipeline, and the tools for the com
 * 🏃 **Keeps improving with training.** DyLoMo-DiT-XL reaches FID 2.18 at 1.6M steps, below the 2.27 reported for
   DiT-XL/2 after 7M steps.
 * 🖼️ **Scales to text-to-image.** A 15.48B-parameter model with 1.05B active parameters per image token scores 0.714
-  on GenEval, above FLUX.1 (0.673) with less than one tenth of its active parameters (1.05B vs. 12B).
+  on GenEval, above FLUX.1 (0.673) with less than one tenth of its active parameters (1.05B vs. 12B). Of the four
+  models compared at 1024², it also has the lowest COCO FID-10K (17.9 vs. 22.4–28.6) and the highest DPG-Bench score
+  (85.0), level with FLUX.1-schnell (84.8) within the 95% interval.
 
 ## 🧬 Architecture
 
@@ -181,6 +183,22 @@ forward pass of the denoiser.
 | Sana-1.6B | 1.6 | 1024² | 1,483 | 0.632 |
 | SDXL | 2.6 | 1024² | 3,381 | 0.551 |
 | PixArt-α | 0.6 | 512² | 618 | 0.483 |
+
+DPG-Bench and COCO FID-10K of the four models with the highest GenEval, each at 1024² with the checkpoint and sampling
+settings of the table above (Table A1 of the paper). DPG-Bench: 1,065 prompts with 4 images each; the 95% intervals
+come from resampling the prompts. COCO FID-10K: the first 10,000 captions of the commonly used MS-COCO val2014 list, one
+image per caption, with generated and reference images resized to 256×256 before FID; one generation run per model, so
+the values are comparable within this table but not with COCO FID numbers reported elsewhere.
+
+| Model | DPG-Bench ↑ | 95% interval | COCO FID-10K ↓ |
+|---|---|---|---|
+| **DyLoMo-DiT** | 85.0 | [83.9, 86.0] | **17.9** |
+| FLUX.1-schnell | 84.8 | [83.7, 85.8] | 22.4 |
+| Sana-1.6B | 83.9 | [82.9, 84.9] | 27.0 |
+| FLUX.1-dev | 83.6 | [82.6, 84.7] | 28.6 |
+
+The DPG-Bench differences to Sana-1.6B and FLUX.1-dev exclude zero; the difference to FLUX.1-schnell does not. For
+DyLoMo-DiT, both evaluations used this repository's text-to-image entry point and the released weights.
 
 ## 🎨 Gallery
 
@@ -436,8 +454,9 @@ Configs of the released models are in `configs/`; parameter names and shapes are
   difference between two forward passes was about 2e-5 at an output magnitude of about 20.
   `sample_ddp.py --deterministic` switches PyTorch to deterministic algorithms, with which repeated runs on the same
   GPU gave bit-identical results.
-* **Metrics.** FID and GenEval of the released checkpoints have not been re-measured with this repository, and the
-  effect of the non-determinism above, of `--deterministic` and of `--no-tf32` on the metrics has not been measured.
+* **Metrics.** FID and GenEval of the released checkpoints have not been re-measured with this repository; DPG-Bench
+  and COCO FID-10K of the text-to-image model were measured with it and the released weights. The effect of the
+  non-determinism above, of `--deterministic` and of `--no-tf32` on the metrics has not been measured.
 * The text-to-image evaluation in the paper was run with a multi-GPU implementation of the same computation (fp32
   weights, bf16 autocast); this repository provides the single-GPU reference path.
 * Text features are computed with every prompt padded to the full length of 1,000 tokens, as during training
