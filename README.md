@@ -286,8 +286,9 @@ otherwise; both give the same result.
 Download the weights from the Hugging Face Hub:
 
 ```bash
-# one ImageNet model folder (config.json + model.safetensors); also DyLoMo-DiT-B, DyLoMo-DiT-L, DyLoMo-DiT-XL-1.6M
-huggingface-cli download OneCreamBox/DyLoMo-DiT-ImageNet256 --include "DyLoMo-DiT-XL/*" --local-dir checkpoints
+# one ImageNet model folder (config.json + model.safetensors) and the top-level index config.json
+# other folders: DyLoMo-DiT-B, DyLoMo-DiT-L, DyLoMo-DiT-XL-1.6M
+huggingface-cli download OneCreamBox/DyLoMo-DiT-ImageNet256 --include "config.json" "DyLoMo-DiT-XL/*" --local-dir checkpoints
 
 # the text-to-image research preview (config.json, model.safetensors.index.json and all shards, about 32 GB)
 huggingface-cli download OneCreamBox/DyLoMo-DiT-T2I-Preview --local-dir checkpoints/dylomo-dit-t2i

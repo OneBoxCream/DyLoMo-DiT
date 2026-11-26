@@ -50,6 +50,13 @@ def test_released_text_to_image_config():
     assert len(layer_schedule(model.num_layers, model.loop_span, model.passes)) == 8 + 16 * 2 + 8
 
 
+def test_repository_index_is_not_a_model_config(tmp_path):
+    # the top-level config.json of the ImageNet weights repository only lists the model folders
+    (tmp_path / "config.json").write_text(json.dumps({"models": ["DyLoMo-DiT-B", "DyLoMo-DiT-XL"]}))
+    with pytest.raises(ValueError, match="DyLoMo-DiT-B, DyLoMo-DiT-XL"):
+        dylomo.load_config(tmp_path)
+
+
 def test_pass_schedule_and_sampling_grid():
     schedule = PassSchedule((500,), (3, 1))
     assert [schedule.passes_at(t) for t in (0, 499, 500, 999)] == [3, 3, 1, 1]

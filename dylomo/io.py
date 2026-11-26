@@ -22,6 +22,9 @@ def load_config(path: Union[str, Path]) -> Dict:
     if path.is_dir():
         path = path / CONFIG_NAME
     config = json.loads(path.read_text())
+    if "model_type" not in config and isinstance(config.get("models"), list):  # top-level index of a weights repo
+        raise ValueError(f"{path} lists the models of a repository, it is not a model config; load one of its "
+                         f"model folders instead: {', '.join(map(str, config['models']))}")
     if config.get("model_type") not in MODEL_TYPES:
         raise ValueError(f"unknown model_type {config.get('model_type')!r}; expected one of {sorted(MODEL_TYPES)}")
     return config
