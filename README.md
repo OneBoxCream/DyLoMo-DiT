@@ -10,6 +10,8 @@ Lernie Li &nbsp;·&nbsp; Yuanliu Liu &nbsp;·&nbsp; Pengfei Xiong &nbsp;·&nbsp;
 <a href="https://oneboxcream.github.io/DyLoMo-DiT/"><img src="https://img.shields.io/badge/Project-Page-1f4e8c.svg" height="22"></a>
 <a href="https://huggingface.co/OneCreamBox/DyLoMo-DiT-ImageNet256"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Weights-ImageNet%20256-d96902.svg" height="22"></a>
 <a href="https://huggingface.co/OneCreamBox/DyLoMo-DiT-T2I-Preview"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Weights-Text--to--Image%20preview-d96902.svg" height="22"></a>
+<a href="https://huggingface.co/spaces/hugging-apps/dylomo-dit-t2i"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Demo-Text--to--Image-f5b400.svg" height="22"></a>
+<a href="https://huggingface.co/spaces/hugging-apps/dylomo-dit-imagenet256"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Demo-ImageNet%20256-f5b400.svg" height="22"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/Code-Apache--2.0-2e7d32.svg" height="22"></a>
 <a href="https://creativecommons.org/licenses/by-nc/4.0/"><img src="https://img.shields.io/badge/Weights-CC%20BY--NC%204.0-6d6d6d.svg" height="22"></a>
 
@@ -27,6 +29,9 @@ its active parameters.
 
 ## 🔥 News
 
+* **2026-11-27** — Try DyLoMo-DiT in the browser: the Hugging Face team built two interactive demos on free ZeroGPU
+  hardware, [🤗 text-to-image](https://huggingface.co/spaces/hugging-apps/dylomo-dit-t2i) and
+  [🤗 ImageNet 256×256](https://huggingface.co/spaces/hugging-apps/dylomo-dit-imagenet256). Thank you, Hugging Face!
 * **2026-11-24** — Paper, code, ImageNet 256×256 weights and a text-to-image research preview
   are released.
 
@@ -36,6 +41,7 @@ its active parameters.
 - [x] ImageNet 256×256 weights: DyLoMo-DiT-B / L / XL (400k steps) and DyLoMo-DiT-XL (1.6M steps)
 - [x] Text-to-image weights: an intermediate checkpoint, released as a research preview
 - [x] FID reproduction scripts and the compute accounting of the paper
+- [x] Online demos on Hugging Face Spaces: text-to-image and ImageNet 256×256
 - [ ] Training code for the ImageNet 256×256 experiments
 
 ## 📋 Contents
@@ -220,7 +226,7 @@ DyLoMo-DiT, both evaluations used this repository's text-to-image entry point an
 
 ## 🧱 Model Zoo
 
-### Class-conditional, ImageNet 256×256 &nbsp; [🤗 weights](https://huggingface.co/OneCreamBox/DyLoMo-DiT-ImageNet256)
+### Class-conditional, ImageNet 256×256 &nbsp; [🤗 weights](https://huggingface.co/OneCreamBox/DyLoMo-DiT-ImageNet256) &nbsp; [🤗 demo](https://huggingface.co/spaces/hugging-apps/dylomo-dit-imagenet256)
 
 All models: 400k training steps unless noted, EMA weights, 250-step DDPM, classifier-free guidance 1.5, FID-50K with
 the ADM evaluator.
@@ -248,7 +254,7 @@ The 1.6M-step model continues the seed-42 XL run. The released checkpoints' full
 | DyLoMo-DiT-XL (400k) | 42 | 4.34 | 4.30 | 172.4 | 0.82 | 0.53 |
 | DyLoMo-DiT-XL (1.6M) | 42 | 2.18 | 4.28 | 253.0 | 0.83 | 0.58 |
 
-### Text-to-image &nbsp; [🤗 weights](https://huggingface.co/OneCreamBox/DyLoMo-DiT-T2I-Preview)
+### Text-to-image &nbsp; [🤗 weights](https://huggingface.co/OneCreamBox/DyLoMo-DiT-T2I-Preview) &nbsp; [🤗 demo](https://huggingface.co/spaces/hugging-apps/dylomo-dit-t2i)
 
 > **The text-to-image weights are an intermediate checkpoint, not a final model.** They are released to make the
 > text-to-image result of the paper reproducible.
@@ -259,6 +265,9 @@ The 1.6M-step model continues the seed-42 XL run. The released checkpoints' full
 
 Text encoder: Qwen2.5-VL-7B (frozen); VAE: Wan2.2 VAE (48 channels, 16x downsampling); training objective: rectified
 flow; sampling: 50 Euler steps, shift 1.6, APG with guidance scale 5.
+
+The online demo runs this checkpoint with these sampling settings by default. To fit a 48 GB GPU it quantizes the frozen text
+encoder to 4-bit (NF4), so its images can differ slightly from those of the full-precision setup.
 
 ## 🔧 Installation
 
